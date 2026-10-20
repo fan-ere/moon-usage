@@ -1,0 +1,33 @@
+name: MoonBit core
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Check, build and test
+        run: |
+          moon version --all
+          moon check --deny-warn --target all
+          moon build --target all
+          moon test --deny-warn --target all
+          moon fmt --check
+          moon info
+      - name: Exercise public API examples
+        run: |
+          moon run examples/demo --target wasm
+          moon run examples/demo --target wasm-gc
+          moon run examples/demo --target js
+          moon run examples/demo --target native
+          moon run examples/export --target wasm
+          moon run examples/export --target wasm-gc
+          moon run examples/export --target js
+          moon run examples/export --target native

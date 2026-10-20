@@ -1,0 +1,132 @@
+[
+  {
+    "name": "ash1day/sql",
+    "description": "PostgreSQL query builder for MoonBit: SQL AST and bound parameters",
+    "repository": "https://github.com/ash1day/moonbit-sql"
+  },
+  {
+    "name": "cstoooo/terminfo",
+    "description": "terminfo(5) terminal capability library in pure MoonBit: compiled binary format, source language, and tparm parameter expansion",
+    "repository": "https://github.com/cstoooo/terminfo"
+  },
+  {
+    "name": "guolei-dev/touchstone",
+    "description": "Portable Touchstone network IO and RF parameter analysis",
+    "repository": "https://github.com/guolei-dev/moonbit-touchstone"
+  },
+  {
+    "name": "hackwaly/wordcount",
+    "description": "A simple word count program written in Moonbit aims to demostrate the usage of Moonbit's lexscan feature.",
+    "repository": ""
+  },
+  {
+    "name": "haol-05/moonmoney",
+    "description": "Exact money and currency arithmetic for MoonBit: ISO 4217 minor units, allocation without losing a cent, tax, cash rounding, parsing and formatting",
+    "repository": "https://github.com/haol-05/moonmoney"
+  },
+  {
+    "name": "jdjjttr/montecarlo",
+    "description": "Reproducible financial Monte Carlo simulation framework in MoonBit",
+    "repository": "https://github.com/jdjjttr/moonbit-montecarlo"
+  },
+  {
+    "name": "justjavac/proton_rabbita",
+    "description": "Rabbita commands and subscriptions for typed Proton contracts.",
+    "repository": "https://github.com/moonbit-community/proton"
+  },
+  {
+    "name": "Lfan-ke/moonorm",
+    "description": "moonorm — an ORM / SQL toolkit for MoonBit (← SQLAlchemy / SQLModel): a parameterized, injection-safe query builder (select / insert / update / delete).",
+    "repository": "https://github.com/moonbitstack/moonorm"
+  },
+  {
+    "name": "Lfan-ke/moonrpc",
+    "description": "moonrpc — a real gRPC implementation for MoonBit (← gRPC). v0.8.1 adds Channel::stream_take, which drives a streaming call inline — no background reader — and returns once it has collected a bounded number of reply messages, so a caller can consume the first N of an unbounded subscription (etcd's Watch, a long server-streaming feed) and close, keeping the whole exchange in one task. v0.8.0 completes the client channel stack. Load balancing picks a READY sub-connection per call (pick_first or round_robin) from a connection pool that tracks each address through the gRPC connectivity states (IDLE/CONNECTING/READY/TRANSIENT_FAILURE/SHUTDOWN); a ManagedChannel dials several backends over real sockets and routes calls through the picker. Name resolution self-builds a DNS message codec (RFC 1035, A/AAAA with name compression) and a UDP resolver, so dns_connect turns a hostname into the backends it dials. Retry and hedging policies drive re-issue and parallel attempts — hedging fires a fresh attempt every hedging delay and commits on the first fatal status, cancelling the rest. Client keepalive pings an idle connection and closes it on a missed ACK. A multiplexed channel (MuxChannel) carries many concurrent calls over one connection through a shared read pump with per-stream inboxes and serialized writes, drives keepalive, and supports interactive bidirectional streaming — send while receiving, replies read message by message. v0.7.0 adds per-message gzip: a self-built DEFLATE (RFC 1951, stored/fixed/dynamic-Huffman) and gzip (RFC 1952, CRC-32 + ISIZE) reader that decompresses gzip requests on the server and gzip responses on the client, and client-side retry with exponential backoff bounded by the call deadline. It also hardens every decoder against malformed input: the gRPC length prefix, HPACK integer/string, protobuf, and health decoders now reject an out-of-range or overflowing length instead of aborting; flow-control windows saturate rather than wrap; peer SETTINGS are validated; the client reassembles a response header block across CONTINUATION; and header blocks and message sizes are capped. v0.6.1 self-builds a pure protobuf wire runtime (PbWriter/PbReader for varint, zigzag, fixed32/64, and length-delimited fields) and Server Reflection: a descriptor model and the grpc.reflection.v1.ServerReflection service (with its v1alpha alias) answering ListServices, FileContainingSymbol, and FileByFilename. v0.6 added the client half — a real Channel, a long-lived multiplexed h2c connection over @socket.Tcp driven by a pure H2Client engine symmetric to the server — plus the grpc.health.v1.Health service, server interceptors, -bin metadata, google.rpc.Status rich errors, and client-side grpc-timeout enforcement. The server engine (H2Server) serves all four call kinds over the self-built HTTP/2 (h2c) transport, driving the RFC 7540 frame layer, the stream state machine, complete HPACK (RFC 7541, with Huffman + dynamic table), and connection- and stream-level flow control. Includes the shared length-prefixed framing and the 17-code gRPC status model.",
+    "repository": "https://github.com/moonbitstack/moonrpc"
+  },
+  {
+    "name": "lqyq666/bodymate",
+    "description": "Dependency-free MoonBit libraries: a guard for LLM-proposed actions, Chinese numeral parsing, bilingual anatomy terminology, and parameterized motion sessions with deterministic pose intents; with a full-body reference application",
+    "repository": "https://github.com/lqyq666/bodymate"
+  },
+  {
+    "name": "lwmvr/moonbit-fixedincome",
+    "description": "Fixed-income cash-flow generation and pricing primitives in MoonBit.",
+    "repository": "https://github.com/lwmvr/moonbit-fixedincome"
+  },
+  {
+    "name": "lyyjavastudy/moonbit-freight-calculator",
+    "description": "A MoonBit freight billing rule engine for parcel logistics.",
+    "repository": "https://github.com/xvkong834/moonbit-freight-calculator"
+  },
+  {
+    "name": "maria/sensor_driver",
+    "description": "Comprehensive motion sensor driver library with accelerometer, gyroscope, magnetometer support, sensor fusion algorithms (Complementary, Kalman, Madgwick), and gesture recognition for motion control applications",
+    "repository": "https://github.com/maria/sensor_driver"
+  },
+  {
+    "name": "marianoguerra/mcp-client",
+    "description": "MCP 2026-07-28 client: streamable-HTTP and stdio transports, MRTR, subscriptions and the tasks extension.",
+    "repository": "https://github.com/marianoguerra/mcp-mb"
+  },
+  {
+    "name": "mizchi/differentiable_ecs",
+    "description": "Game-agnostic parameter optimizer using CMA-ES for balance tuning (experimental)",
+    "repository": "https://github.com/mizchi/differentiable_ecs"
+  },
+  {
+    "name": "moonbit-community/proton_rabbita",
+    "description": "Rabbita commands and subscriptions for typed Proton contracts.",
+    "repository": "https://github.com/moonbit-community/proton"
+  },
+  {
+    "name": "moonbitstack/moonorm",
+    "description": "moonorm — an ORM / SQL toolkit for MoonBit (← SQLAlchemy / SQLModel): a parameterized, injection-safe query builder (select / insert / update / delete).",
+    "repository": "https://github.com/moonbitstack/moonorm"
+  },
+  {
+    "name": "moonbitstack/moonrpc",
+    "description": "moonrpc — a real gRPC implementation for MoonBit (← gRPC). v0.8.1 adds Channel::stream_take, which drives a streaming call inline — no background reader — and returns once it has collected a bounded number of reply messages, so a caller can consume the first N of an unbounded subscription (etcd's Watch, a long server-streaming feed) and close, keeping the whole exchange in one task. v0.8.0 completes the client channel stack. Load balancing picks a READY sub-connection per call (pick_first or round_robin) from a connection pool that tracks each address through the gRPC connectivity states (IDLE/CONNECTING/READY/TRANSIENT_FAILURE/SHUTDOWN); a ManagedChannel dials several backends over real sockets and routes calls through the picker. Name resolution self-builds a DNS message codec (RFC 1035, A/AAAA with name compression) and a UDP resolver, so dns_connect turns a hostname into the backends it dials. Retry and hedging policies drive re-issue and parallel attempts — hedging fires a fresh attempt every hedging delay and commits on the first fatal status, cancelling the rest. Client keepalive pings an idle connection and closes it on a missed ACK. A multiplexed channel (MuxChannel) carries many concurrent calls over one connection through a shared read pump with per-stream inboxes and serialized writes, drives keepalive, and supports interactive bidirectional streaming — send while receiving, replies read message by message. v0.7.0 adds per-message gzip: a self-built DEFLATE (RFC 1951, stored/fixed/dynamic-Huffman) and gzip (RFC 1952, CRC-32 + ISIZE) reader that decompresses gzip requests on the server and gzip responses on the client, and client-side retry with exponential backoff bounded by the call deadline. It also hardens every decoder against malformed input: the gRPC length prefix, HPACK integer/string, protobuf, and health decoders now reject an out-of-range or overflowing length instead of aborting; flow-control windows saturate rather than wrap; peer SETTINGS are validated; the client reassembles a response header block across CONTINUATION; and header blocks and message sizes are capped. v0.6.1 self-builds a pure protobuf wire runtime (PbWriter/PbReader for varint, zigzag, fixed32/64, and length-delimited fields) and Server Reflection: a descriptor model and the grpc.reflection.v1.ServerReflection service (with its v1alpha alias) answering ListServices, FileContainingSymbol, and FileByFilename. v0.6 added the client half — a real Channel, a long-lived multiplexed h2c connection over @socket.Tcp driven by a pure H2Client engine symmetric to the server — plus the grpc.health.v1.Health service, server interceptors, -bin metadata, google.rpc.Status rich errors, and client-side grpc-timeout enforcement. The server engine (H2Server) serves all four call kinds over the self-built HTTP/2 (h2c) transport, driving the RFC 7540 frame layer, the stream state machine, complete HPACK (RFC 7541, with Huffman + dynamic table), and connection- and stream-level flow control. Includes the shared length-prefixed framing and the 17-code gRPC status model.",
+    "repository": "https://github.com/moonbitstack/moonrpc"
+  },
+  {
+    "name": "oboard/apple_silicon_accelerometer",
+    "description": "A MoonBit library for accessing accelerometer, gyroscope, and lid sensor data on Apple Silicon devices.",
+    "repository": "https://github.com/oboard/apple-silicon-accelerometer"
+  },
+  {
+    "name": "pangbit/moonpulsar",
+    "description": "Apache Pulsar binary protocol client for MoonBit: connection management, producer (sync/async send, batching) and consumer (subscription modes, ack/nack, flow control)",
+    "repository": "https://github.com/pangbit/moonpulsar"
+  },
+  {
+    "name": "vectie/moongate",
+    "description": "MoonBit-native local proxy and usage statistics gateway for the Moon suite",
+    "repository": "https://github.com/vectie/moongate"
+  },
+  {
+    "name": "weopqrst/mooncassette-llm",
+    "description": "mizchi/llm adapter for mooncassette: drive mizchi/llm conversations from recorded cassettes, and replace its estimated token counts with the exact usage the provider reported.",
+    "repository": "https://github.com/mihujiang/mooncassette.git"
+  },
+  {
+    "name": "xiaobai718-ab/moondisk",
+    "description": "Disk usage analysis, snapshot comparison, and safe cleanup planning for MoonBit",
+    "repository": "https://github.com/xiaobai718-ab/moondisk"
+  },
+  {
+    "name": "xubowen1234/moonuri",
+    "description": "RFC 3986 URI parsing, query parameters, percent encoding, path templates, and reference resolution",
+    "repository": "https://github.com/xubowen1234/moonuri"
+  },
+  {
+    "name": "xvkong834/moonbit-freight-calculator",
+    "description": "A MoonBit freight billing rule engine for parcel logistics.",
+    "repository": "https://github.com/xvkong834/moonbit-freight-calculator"
+  },
+  {
+    "name": "zc222er/thinfilm_tmm",
+    "description": "High-performance Pure MoonBit Transfer Matrix Method (TMM) optical simulation & parameter inversion engine",
+    "repository": "https://github.com/zc222er/moonbit-thinfilm-tmm"
+  }
+]

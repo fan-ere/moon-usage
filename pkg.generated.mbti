@@ -1,0 +1,160 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "fan-ere/moon-usage"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn aggregate(Array[Event], String, String, Int, Int, Aggregation) -> Result[Usage, UsageError]
+
+pub fn bill(Array[Event], String, String, Int, Int, Aggregation, Plan) -> Result[Bill, UsageError]
+
+pub fn rate(Plan, Int) -> Result[Quote, UsageError]
+
+pub fn validate_plan(Plan) -> Result[Unit, UsageError]
+
+// Errors
+
+// Types and methods
+pub(all) enum Aggregation {
+  Sum
+  Peak
+  Last
+  Counter(ResetPolicy)
+} derive(Eq, @debug.Debug)
+pub fn Aggregation::equal(Self, Self) -> Bool
+pub fn Aggregation::not_equal(Self, Self) -> Bool
+pub fn Aggregation::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Bill {
+  account : String
+  meter : String
+  start : Int
+  end : Int
+  usage : Usage
+  quote : Quote
+} derive(@debug.Debug)
+pub fn Bill::to_json(Self) -> Json
+pub fn Bill::to_repr(Self) -> @debug.Repr
+
+pub(all) struct ChargeLine {
+  tier : Int
+  quantity : Int
+  rate : Int
+  numerator : Int64
+} derive(Eq, @debug.Debug)
+pub fn ChargeLine::equal(Self, Self) -> Bool
+pub fn ChargeLine::not_equal(Self, Self) -> Bool
+pub fn ChargeLine::to_repr(Self) -> @debug.Repr
+
+pub(all) struct CounterDelta {
+  event_id : String
+  time : Int
+  previous : Int
+  reading : Int
+  delta : Int
+  reset : Bool
+} derive(Eq, @debug.Debug)
+pub fn CounterDelta::equal(Self, Self) -> Bool
+pub fn CounterDelta::not_equal(Self, Self) -> Bool
+pub fn CounterDelta::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Event {
+  id : String
+  account : String
+  meter : String
+  time : Int
+  value : Int
+} derive(Eq, @debug.Debug)
+pub fn Event::equal(Self, Self) -> Bool
+pub fn Event::not_equal(Self, Self) -> Bool
+pub fn Event::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Plan {
+  currency : String
+  pricing : Pricing
+  tiers : Array[Tier]
+  per_units : Int
+  base_minor : Int
+  rounding : Rounding
+} derive(@debug.Debug)
+pub fn Plan::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Pricing {
+  Graduated
+  Volume
+} derive(Eq, @debug.Debug)
+pub fn Pricing::equal(Self, Self) -> Bool
+pub fn Pricing::not_equal(Self, Self) -> Bool
+pub fn Pricing::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Quote {
+  currency : String
+  pricing : Pricing
+  rounding : Rounding
+  quantity : Int
+  denominator : Int
+  lines : Array[ChargeLine]
+  usage_numerator : Int64
+  usage_minor : Int64
+  base_minor : Int
+  total_minor : Int64
+} derive(@debug.Debug)
+pub fn Quote::to_repr(Self) -> @debug.Repr
+
+pub(all) enum ResetPolicy {
+  RejectDecrease
+  RestartAtZero
+} derive(Eq, @debug.Debug)
+pub fn ResetPolicy::equal(Self, Self) -> Bool
+pub fn ResetPolicy::not_equal(Self, Self) -> Bool
+pub fn ResetPolicy::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Rounding {
+  Down
+  Up
+  HalfEven
+} derive(Eq, @debug.Debug)
+pub fn Rounding::equal(Self, Self) -> Bool
+pub fn Rounding::not_equal(Self, Self) -> Bool
+pub fn Rounding::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Tier {
+  up_to : Int?
+  rate : Int
+} derive(Eq, @debug.Debug)
+pub fn Tier::equal(Self, Self) -> Bool
+pub fn Tier::not_equal(Self, Self) -> Bool
+pub fn Tier::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Usage {
+  aggregation : Aggregation
+  quantity : Int
+  accepted_events : Int
+  duplicate_events : Int
+  reset_events : Int
+  baseline_id : String?
+  event_ids : Array[String]
+  counter_deltas : Array[CounterDelta]
+} derive(@debug.Debug)
+pub fn Usage::to_repr(Self) -> @debug.Repr
+
+pub(all) enum UsageError {
+  InvalidPeriod
+  EmptyIdentity
+  InvalidValue(String)
+  DuplicateConflict(String)
+  AmbiguousReading(Int)
+  MissingBaseline
+  CounterDecreased(String)
+  QuantityLimit
+  InvalidPlan(String)
+} derive(Eq, @debug.Debug)
+pub fn UsageError::equal(Self, Self) -> Bool
+pub fn UsageError::not_equal(Self, Self) -> Bool
+pub fn UsageError::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

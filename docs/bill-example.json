@@ -1,0 +1,57 @@
+{
+  "schema": "moon-usage.bill.v1",
+  "account": "demo",
+  "meter": "device",
+  "start": 10,
+  "end": 20,
+  "usage": {
+    "aggregation": "counter",
+    "reset_policy": "restart_at_zero",
+    "quantity": 34,
+    "accepted_events": 2,
+    "duplicate_events": 0,
+    "reset_events": 1,
+    "baseline_id": "baseline",
+    "event_ids": [
+      "reading",
+      "reset"
+    ],
+    "counter_deltas": [
+      {
+        "event_id": "reading",
+        "time": 11,
+        "previous": 1000,
+        "reading": 1030,
+        "delta": 30,
+        "reset": false
+      },
+      {
+        "event_id": "reset",
+        "time": 12,
+        "previous": 1030,
+        "reading": 4,
+        "delta": 4,
+        "reset": true
+      }
+    ]
+  },
+  "quote": {
+    "currency": "CNY",
+    "pricing": "graduated",
+    "rounding": "half_even",
+    "quantity": 34,
+    "denominator": 1,
+    "lines": [
+      {
+        "tier": 0,
+        "quantity": 34,
+        "rate": 8,
+        "numerator": "272"
+      }
+    ],
+    "usage_numerator": "272",
+    "usage_minor": "272",
+    "base_minor": 0,
+    "total_minor": "272"
+  }
+}

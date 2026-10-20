@@ -1,0 +1,13 @@
+API graduated: units=12500 total_minor=3300 currency=CNY
+  events=2 duplicates=1 resets=0
+  tier=0 units=1000 rate=0 exact=0/1000
+  tier=1 units=9000 rate=300 exact=2700000/1000
+  tier=2 units=2500 rate=200 exact=500000/1000
+Storage peak: units=120 total_minor=360 currency=CNY
+  events=3 duplicates=0 resets=0
+  tier=1 units=120 rate=3 exact=360/1
+Device counter: units=42 total_minor=336 currency=CNY
+  events=3 duplicates=0 resets=1
+  tier=0 units=42 rate=8 exact=336/1
+Counter strict ERROR CounterDecreased("reset")
+Conflicting retry ERROR DuplicateConflict("same")

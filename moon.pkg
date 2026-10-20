@@ -1,0 +1,8 @@
+// Pure core; no network, clock, storage, or registry dependencies.
+import {
+  "moonbitlang/core/debug",
+}
+
+import {
+  "moonbitlang/core/json",
+} for "test"
