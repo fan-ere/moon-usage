@@ -1,5 +1,5 @@
 ///|
-fn e(id : String, meter : String, time : Int, value : Int) -> @usage.Event {
+fn e(id : String, meter : String, time : Int32, value : Int32) -> @usage.Event {
   { id, account: "demo", meter, time, value, }
 }
 

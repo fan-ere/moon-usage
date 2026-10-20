@@ -4,8 +4,8 @@ pub(all) struct Event {
   id : String
   account : String
   meter : String
-  time : Int
-  value : Int
+  time : Int32
+  value : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -39,8 +39,8 @@ pub(all) enum Pricing {
 /// Cumulative upper bounds are inclusive: quantity intervals are (previous, up_to].
 /// The last tier must have up_to=None, including for zero usage.
 pub(all) struct Tier {
-  up_to : Int?
-  rate : Int
+  up_to : Int32?
+  rate : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -49,8 +49,8 @@ pub(all) struct Plan {
   currency : String
   pricing : Pricing
   tiers : Array[Tier]
-  per_units : Int
-  base_minor : Int
+  per_units : Int32
+  base_minor : Int32
   rounding : Rounding
 } derive(Debug)
 
@@ -60,7 +60,7 @@ pub(all) enum UsageError {
   EmptyIdentity
   InvalidValue(String)
   DuplicateConflict(String)
-  AmbiguousReading(Int)
+  AmbiguousReading(Int32)
   MissingBaseline
   CounterDecreased(String)
   QuantityLimit
@@ -70,10 +70,10 @@ pub(all) enum UsageError {
 ///|
 pub(all) struct Usage {
   aggregation : Aggregation
-  quantity : Int
-  accepted_events : Int
-  duplicate_events : Int
-  reset_events : Int
+  quantity : Int32
+  accepted_events : Int32
+  duplicate_events : Int32
+  reset_events : Int32
   baseline_id : String?
   event_ids : Array[String]
   counter_deltas : Array[CounterDelta]
@@ -83,10 +83,10 @@ pub(all) struct Usage {
 /// One cumulative reading and its attributed increment, including explicit resets.
 pub(all) struct CounterDelta {
   event_id : String
-  time : Int
-  previous : Int
-  reading : Int
-  delta : Int
+  time : Int32
+  previous : Int32
+  reading : Int32
+  delta : Int32
   reset : Bool
 } derive(Eq, Debug)
 
@@ -99,9 +99,9 @@ pub extend CounterDelta with @debug.Debug::{to_repr}
 ///|
 /// Exact fractional charge is numerator / denominator; rounding occurs once per quote.
 pub(all) struct ChargeLine {
-  tier : Int
-  quantity : Int
-  rate : Int
+  tier : Int32
+  quantity : Int32
+  rate : Int32
   numerator : Int64
 } derive(Eq, Debug)
 
@@ -110,12 +110,12 @@ pub(all) struct Quote {
   currency : String
   pricing : Pricing
   rounding : Rounding
-  quantity : Int
-  denominator : Int
+  quantity : Int32
+  denominator : Int32
   lines : Array[ChargeLine]
   usage_numerator : Int64
   usage_minor : Int64
-  base_minor : Int
+  base_minor : Int32
   total_minor : Int64
 } derive(Debug)
 
@@ -123,8 +123,8 @@ pub(all) struct Quote {
 pub(all) struct Bill {
   account : String
   meter : String
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
   usage : Usage
   quote : Quote
 } derive(Debug)

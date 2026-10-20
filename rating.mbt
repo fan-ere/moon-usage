@@ -40,7 +40,7 @@ pub fn validate_plan(plan : Plan) -> Result[Unit, UsageError] {
 }
 
 ///|
-fn rounded(numerator : Int64, denominator : Int, mode : Rounding) -> Int64 {
+fn rounded(numerator : Int64, denominator : Int32, mode : Rounding) -> Int64 {
   let d = denominator.to_int64()
   let whole = numerator / d
   let remainder = numerator % d
@@ -58,7 +58,7 @@ fn rounded(numerator : Int64, denominator : Int, mode : Rounding) -> Int64 {
 
 ///|
 /// Pure rating; quantities and rates are bounded so all intermediates fit Int64.
-pub fn rate(plan : Plan, quantity : Int) -> Result[Quote, UsageError] {
+pub fn rate(plan : Plan, quantity : Int32) -> Result[Quote, UsageError] {
   match validate_plan(plan) {
     Err(e) => return Err(e)
     Ok(_) => ()
@@ -122,8 +122,8 @@ pub fn bill(
   events : Array[Event],
   account : String,
   meter : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
   mode : Aggregation,
   plan : Plan,
 ) -> Result[Bill, UsageError] {

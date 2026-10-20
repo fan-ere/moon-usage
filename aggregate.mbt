@@ -5,8 +5,8 @@ pub fn aggregate(
   events : Array[Event],
   account : String,
   meter : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
   mode : Aggregation,
 ) -> Result[Usage, UsageError] {
   if start < 0 || end <= start {

@@ -14,7 +14,7 @@
 
 ## 本地运行
 
-前提：MoonBit 工具链，开发版本为 `moon 0.1.20260920` / `moonc v0.10.14+7d59c7ec9`。JS 目标需要 Node.js，Native 需要 C 编译器。该项目尚未发布，不能从 Mooncakes 安装本包。
+前提：MoonBit 工具链，验证版本为 `moon 0.1.20261016` / `moonc v0.10.16+b1a0e846e`。JS 目标需要 Node.js，Native 需要 C 编译器。该项目尚未发布，不能从 Mooncakes 安装本包。
 
 本机 PowerShell：
 

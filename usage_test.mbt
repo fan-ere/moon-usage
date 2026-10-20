@@ -1,13 +1,13 @@
 ///|
-fn event(id : String, time : Int, value : Int) -> @moon-usage.Event {
+fn event(id : String, time : Int32, value : Int32) -> @moon-usage.Event {
   { id, account: "a", meter: "m", time, value, }
 }
 
 ///|
 fn plan(
-  pricing? : @moon-usage.Pricing = Graduated,
-  rounding? : @moon-usage.Rounding = HalfEven,
-  per_units? : Int = 1,
+  pricing~ : @moon-usage.Pricing = Graduated,
+  rounding~ : @moon-usage.Rounding = HalfEven,
+  per_units~ : Int32 = 1,
 ) -> @moon-usage.Plan {
   {
     currency: "CNY",
