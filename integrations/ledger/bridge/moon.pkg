@@ -1,0 +1,8 @@
+import {
+  "fan-ere/moon-usage" @usage,
+  "moonbitlang/core/json",
+}
+
+supported_targets = "js"
+
+pkgtype(kind: "executable")

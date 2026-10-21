@@ -24,3 +24,5 @@ jobs:
           git diff --exit-code
       - name: Exercise public API examples
         run: python3 scripts/verify_examples.py
+      - name: Exercise the standalone bill archive client
+        run: python3 integrations/ledger/test_ledger.py

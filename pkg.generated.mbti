@@ -10,6 +10,8 @@ pub fn aggregate(Array[Event], String, String, Int32, Int32, Aggregation) -> Res
 
 pub fn bill(Array[Event], String, String, Int32, Int32, Aggregation, Plan) -> Result[Bill, UsageError]
 
+pub fn capture(BillInput) -> Result[Snapshot, ReplayError]
+
 pub fn rate(Plan, Int32) -> Result[Quote, UsageError]
 
 pub fn validate_plan(Plan) -> Result[Unit, UsageError]
@@ -37,6 +39,20 @@ pub(all) struct Bill {
 } derive(@debug.Debug)
 pub fn Bill::to_json(Self) -> Json
 pub fn Bill::to_repr(Self) -> @debug.Repr
+
+pub(all) struct BillInput {
+  input_revision : String
+  plan_revision : String
+  events : Array[Event]
+  account : String
+  meter : String
+  start : Int32
+  end : Int32
+  aggregation : Aggregation
+  plan : Plan
+}
+pub fn BillInput::from_json(Json) -> Result[Self, ReplayError]
+pub fn BillInput::to_json(Self) -> Json
 
 pub(all) struct ChargeLine {
   tier : Int32
@@ -103,6 +119,18 @@ pub(all) struct Quote {
 } derive(@debug.Debug)
 pub fn Quote::to_repr(Self) -> @debug.Repr
 
+pub(all) enum ReplayError {
+  InvalidSnapshot(String)
+  InvalidJson(String)
+  UnsupportedSchema(String)
+  UnsupportedRules(String)
+  CalculationFailed(UsageError)
+  BillMismatch
+} derive(Eq, @debug.Debug)
+pub fn ReplayError::equal(Self, Self) -> Bool
+pub fn ReplayError::not_equal(Self, Self) -> Bool
+pub fn ReplayError::to_repr(Self) -> @debug.Repr
+
 pub(all) enum ResetPolicy {
   RejectDecrease
   RestartAtZero
@@ -119,6 +147,15 @@ pub(all) enum Rounding {
 pub fn Rounding::equal(Self, Self) -> Bool
 pub fn Rounding::not_equal(Self, Self) -> Bool
 pub fn Rounding::to_repr(Self) -> @debug.Repr
+
+pub struct Snapshot {
+  document : String
+}
+pub fn Snapshot::from_json(Json) -> Result[Self, ReplayError]
+pub fn Snapshot::from_string(String) -> Result[Self, ReplayError]
+pub fn Snapshot::replay(Self) -> Result[Bill, ReplayError]
+pub fn Snapshot::to_json(Self) -> Json
+pub fn Snapshot::to_string(Self) -> String
 
 pub(all) struct Tier {
   up_to : Int32?

@@ -90,6 +90,9 @@ let result = @usage.bill(events, "customer-a", "requests", 10, 20, Sum, plan)
 | `rate(plan, quantity)` | 独立对已知用量计价，返回 `Result[Quote, UsageError]` |
 | `bill(events, account, meter, start, end, mode, plan)` | 组合前两层，返回 `Result[Bill, UsageError]` |
 | `Bill::to_json()` | 导出带模式、逐笔累计差分、事件来源和费用明细的 JSON 账单 |
+| `capture(BillInput)` | 冻结完整原始输入、价目表、版本标签和计算结果，返回可复算快照 |
+| `Snapshot::from_string(text)` / `Snapshot::from_json(value)` | 校验快照版本与字段，重新计算并核对完整账单 |
+| `Snapshot::replay()` | 使用已保存输入重新计算；返回 `Result[Bill, ReplayError]` |
 
 完整公开接口见 [pkg.generated.mbti](pkg.generated.mbti)，算法与不变量见 [docs/DESIGN.md](docs/DESIGN.md)。
 
@@ -127,6 +130,30 @@ moon run examples/export
 
 导出包含计算明细，但不包含全部原始事件与完整价目表快照，不能仅凭此 JSON 独立重放整个计算。需要复算的应用应另行保存原始输入、价目表及其版本。
 
+## 完整输入快照与离线复算
+
+需要独立复算时使用新增的 `Snapshot`，其 schema 是 `moon-usage.replay.v1`，计算规则版本为 `moon-usage.rules.v1`；原有 `Bill::to_json` 的账单格式保持不变。
+
+```moonbit
+let input : @usage.BillInput = {
+  input_revision: "events-1", plan_revision: "price-1",
+  events, account: "customer-a", meter: "requests",
+  start: 10, end: 20, aggregation: Sum, plan,
+}
+let snapshot = @usage.capture(input).unwrap()
+let saved_text = snapshot.to_string() // 交给上层文件或数据库保存
+let restored = @usage.Snapshot::from_string(saved_text).unwrap()
+let recalculated = restored.replay().unwrap()
+```
+
+快照保留**整批原始事件**（含重复投递及其他账户的事件）、全部价目表档位、周期、聚合/回退政策、输入与价格版本标签，以及完整账单。保存原始顺序是为了保留整批校验语义；修改调用方的事件或价目表数组、修改导出的 JSON，不会改变已有快照。载入时重新调用计量和定价逻辑，比较全部账单字段，拒绝旧金额、被改动的明细、未知 schema/规则版本、缺失或多余字段、非法枚举及非法计价输入。
+
+文本载入显式拒绝重复 JSON 键；数量、时间、费率等数字必须为普通非负整数字面量，不接受小数或指数写法，避免浮点解析把极小小数差异吞掉。`from_json` 接受已解析对象，调用方若自行解析应保留数字原文并拒绝重复键；推荐直接用 `from_string`。快照限制为 100,000 条事件、4,096 档、16 Mi 个字符串代码单元，文本解析深度最多 64；这些是快照层的资源边界，不改变原聚合 API 的能力范围。
+
+快照验证证明“这组输入按本版本规则能产生此结果”，不证明输入真实或文件未被恶意改写。版本是调用方标签；同时改写输入与对应结果仍可通过一致性核对。本期不提供签名、可信时间或账单授权。
+
+独立的 [本地账单存档应用](integrations/ledger/README.md) 通过标准输入调用 MoonBit 桥接程序，实际完成文件存档、读取复算、迟到事件补算和价目表变更比较。Python 只处理文件、版本关系和已验证金额之间的整数差额，费用仍由 MoonBit 核心计算。示例中首次费用 35 分，迟到事件补齐后 45 分，换价后 30 分；比较分别得到 +10、-15 分。它是可运行的接入示例，数据为虚构，不声称已有外部客户或上游采用。
+
 ## 重放、边界与交付状态
 
 这是无持久状态的批量计算库。去重只对本次完整输入生效；迟到事件应加入完整事件集后重算。调用方负责事件存储、跨批幂等、账单版本、已结算账单调整及费用授权。禁止把多个分批账单直接相加冒充完整账单，阶梯价和单次舍入通常不具可加性。
@@ -138,3 +165,5 @@ moon run examples/export
 申报书与内部验证记录仅保留在本地，已列入 `.gitignore`，不属于仓库源码交付内容。
 
 使用 Python 3 可在本地执行与 CI 相同的演示结果核对：`python scripts/verify_examples.py`。脚本在四个目标上运行两个示例，将文本与已记录输出比较，将 JSON 与完整参考对象比较（不依赖对象键顺序），避免示例虽然成功退出、实际结果却发生漂移。
+
+独立应用的集成检查：`python integrations/ledger/test_ledger.py`，需要 Python 3、Node.js 与 MoonBit。测试在临时目录通过真实进程执行文件存档、复算、改价、拒绝旧版本标签、拒绝改坏的文件和拒绝覆盖旧账单；不写入生产数据。

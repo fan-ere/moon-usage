@@ -3,3 +3,5 @@ _build/
 申报书.md
 LOCAL_VALIDATION.md
 DEPTH_REVIEW.md
+__pycache__/
+*.pyc
