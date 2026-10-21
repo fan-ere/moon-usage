@@ -23,12 +23,4 @@ jobs:
           moon info
           git diff --exit-code
       - name: Exercise public API examples
-        run: |
-          moon run examples/demo --target wasm
-          moon run examples/demo --target wasm-gc
-          moon run examples/demo --target js
-          moon run examples/demo --target native
-          moon run examples/export --target wasm
-          moon run examples/export --target wasm-gc
-          moon run examples/export --target js
-          moon run examples/export --target native
+        run: python3 scripts/verify_examples.py

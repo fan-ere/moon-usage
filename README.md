@@ -1,5 +1,7 @@
 # moon-usage
 
+[![MoonBit core](https://github.com/fan-ere/moon-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/fan-ere/moon-usage/actions/workflows/ci.yml)
+
 纯 MoonBit 离线用量聚合与阶梯计费库。输入带 ID 的用量事件、计费周期和价目表，输出用量、费用、参与事件与精确计价明细。仅依赖 MoonBit 标准库。
 
 ## 已实现的工作流
@@ -16,12 +18,20 @@
 
 前提：MoonBit 工具链，验证版本为 `moon 0.1.20261016` / `moonc v0.10.16+b1a0e846e`。JS 目标需要 Node.js，Native 需要 C 编译器。该项目尚未发布，不能从 Mooncakes 安装本包。
 
-本机 PowerShell：
+首次获取源码（公开仓库，无需登录）：
+
+```sh
+git clone https://github.com/fan-ere/moon-usage.git
+cd moon-usage
+moon run examples/demo --target wasm-gc
+```
+
+本机 PowerShell（复用已验证的工具链）：
 
 ```powershell
 Set-Location D:\moonbit\moon-usage
-$env:MOON_HOME = 'D:\moonbit-toolchain'
-$env:PATH = 'D:\moonbit-toolchain\bin;' + $env:PATH
+$env:MOON_HOME = 'D:\moonbit\moon-usage\_build\toolchain-current'
+$env:PATH = $env:MOON_HOME + '\bin;' + $env:PATH
 moon run examples/demo
 ```
 
@@ -115,12 +125,16 @@ moon run examples/export
 
 这是给上层存储和展示使用的结构化导出，不提供 JSON 导入或账单真实性校验。公开结构可以由调用方自行构造，序列化不代表重新校验该结构。导出保留输入中的账户与事件标识，实际分享时由调用方决定这些标识是否适合公开。
 
+导出包含计算明细，但不包含全部原始事件与完整价目表快照，不能仅凭此 JSON 独立重放整个计算。需要复算的应用应另行保存原始输入、价目表及其版本。
+
 ## 重放、边界与交付状态
 
 这是无持久状态的批量计算库。去重只对本次完整输入生效；迟到事件应加入完整事件集后重算。调用方负责事件存储、跨批幂等、账单版本、已结算账单调整及费用授权。禁止把多个分批账单直接相加冒充完整账单，阶梯价和单次舍入通常不具可加性。
 
-纯函数不读取系统时钟、不访问网络、不发送收费请求。成功输出代表输入在本模型内可计算，不证明上游用量真实或账单合法。复杂度为批量校验 O(n)、所选事件排序 O(k log k)、定价 O(t)，空间 O(n+k+t)。普通聚合只排序本周期匹配事件，累计表为保留基线和历史歧义检查而读取 end 前历史；仍会校验整批输入。分段计费达到总用量后停止拆档，完整价目表仍预先验证；没有外部文件导入器或恶意输入资源隔离。
+纯函数不读取系统时钟、不访问网络、不发送收费请求。成功输出代表输入在本模型内可计算，不证明上游用量真实或账单合法。采用哈希索引时，批量校验预期 O(n)、周期内 k 个事件排序 O(k log k)、定价 O(t)，空间 O(n+k+t)。所有模式只排序本周期匹配事件；累计表在扫描历史时选择最新基线，以时间索引检测全部历史歧义，无需对历史排序。仍会校验整批输入。分段计费达到总用量后停止拆档，完整价目表仍预先验证；没有外部文件导入器或恶意输入资源隔离。此处为算法分析，未测量具体提速倍数。
 
-来源与查重见 [SOURCES.md](SOURCES.md)。源码采用 MIT。GitHub 源码仓库为 [fan-ere/moon-usage](https://github.com/fan-ere/moon-usage)，首次上传按私有仓库准备。CI 提供 check/build/test 和示例步骤，实际运行结果以 GitHub Actions 为准；尚未发布 Mooncakes，本地测试与源码上传不代表初审或官方验收通过。
+来源与查重见 [SOURCES.md](SOURCES.md)。源码采用 MIT。GitHub 源码仓库 [fan-ere/moon-usage](https://github.com/fan-ere/moon-usage) 已公开，可匿名克隆。CI 提供 check/build/test、接口检查和四目标示例结果核对，实际结果以对应提交的 GitHub Actions 为准；尚未发布 Mooncakes，本地测试与源码上传不代表初审或官方验收通过。
 
 申报书与内部验证记录仅保留在本地，已列入 `.gitignore`，不属于仓库源码交付内容。
+
+使用 Python 3 可在本地执行与 CI 相同的演示结果核对：`python scripts/verify_examples.py`。脚本在四个目标上运行两个示例，将文本与已记录输出比较，将 JSON 与完整参考对象比较（不依赖对象键顺序），避免示例虽然成功退出、实际结果却发生漂移。

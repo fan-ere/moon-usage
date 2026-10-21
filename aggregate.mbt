@@ -18,6 +18,9 @@ pub fn aggregate(
   let seen : Map[String, Event] = Map([])
   let selected : Array[Event] = []
   let needs_history = mode is Counter(_)
+  let history_ticks : Map[Int32, Bool] = Map([])
+  let mut baseline : Event? = None
+  let mut ambiguous_history : Int32? = None
   let mut duplicates = 0
   for event in events {
     if event.id == "" || event.account == "" || event.meter == "" {
@@ -40,11 +43,32 @@ pub fn aggregate(
       }
       None => {
         seen[event.id] = event
-        if event.account == account &&
-          event.meter == meter &&
-          event.time < end &&
-          (needs_history || event.time >= start) {
-          selected.push(event)
+        if event.account == account && event.meter == meter && event.time < end {
+          if event.time >= start {
+            selected.push(event)
+          } else if needs_history {
+            // Keep only the newest baseline, but audit every historical tick.
+            // Identical retries have already been removed by the global ID index.
+            if history_ticks.get(event.time) is Some(_) {
+              ambiguous_history = Some(
+                match ambiguous_history {
+                  Some(tick) =>
+                    if event.time < tick {
+                      event.time
+                    } else {
+                      tick
+                    }
+                  None => event.time
+                },
+              )
+            } else {
+              history_ticks[event.time] = true
+            }
+            match baseline {
+              Some(old) => if event.time > old.time { baseline = Some(event) }
+              None => baseline = Some(event)
+            }
+          }
         }
       }
     }
@@ -58,16 +82,13 @@ pub fn aggregate(
   })
   let mut quantity = 0
   let mut resets = 0
-  let mut baseline : Event? = None
   let ids : Array[String] = []
   let counter_deltas : Array[CounterDelta] = []
   match mode {
     Counter(_) => {
-      // A value at start is an interval-end reading, so require a strictly earlier baseline.
-      for event in selected {
-        if event.time < start {
-          baseline = Some(event)
-        }
+      // Finish global validation before reporting historical ambiguity, as before.
+      if ambiguous_history is Some(tick) {
+        return Err(AmbiguousReading(tick))
       }
       // Ambiguous same-tick readings are refused, including candidate baselines.
       for i = 1; i < selected.length(); i = i + 1 {
@@ -92,9 +113,6 @@ pub fn aggregate(
     None => 0
   }
   for event in selected {
-    if event.time < start {
-      continue
-    }
     ids.push(event.id)
     match mode {
       Sum => {
