@@ -21,15 +21,7 @@ fn handle(request : Json) -> Json {
   }
   let result = match command {
     "capture" => {
-      let value = @json.parse(
-        payload,
-        reject_duplicate_keys=true,
-        preserve_number_repr=true,
-        max_nesting_depth=64,
-      ) catch {
-        e => return fail(e.to_string())
-      }
-      let input = match @usage.BillInput::from_json(value) {
+      let input = match @usage.BillInput::from_string(payload) {
         Ok(i) => i
         Err(e) => return fail(e.to_repr().to_string())
       }

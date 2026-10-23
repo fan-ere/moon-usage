@@ -52,6 +52,7 @@ pub(all) struct BillInput {
   plan : Plan
 }
 pub fn BillInput::from_json(Json) -> Result[Self, ReplayError]
+pub fn BillInput::from_string(String) -> Result[Self, ReplayError]
 pub fn BillInput::to_json(Self) -> Json
 
 pub(all) struct ChargeLine {

@@ -198,6 +198,32 @@ pub fn BillInput::from_json(value : Json) -> Result[BillInput, ReplayError] {
 }
 
 ///|
+/// Decode input text without losing duplicate keys or numeric token precision.
+/// Semantic event/plan validation is performed by capture/bill, not by decoding.
+pub fn BillInput::from_string(text : String) -> Result[BillInput, ReplayError] {
+  match parse_document(text) {
+    Ok(value) => BillInput::from_json(value)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+fn parse_document(text : String) -> Result[Json, ReplayError] {
+  if text.length() > 16777216 {
+    return Err(InvalidSnapshot("text: limit 16Mi code units"))
+  }
+  let value = @json.parse(
+    text,
+    reject_duplicate_keys=true,
+    preserve_number_repr=true,
+    max_nesting_depth=64,
+  ) catch {
+    e => return Err(InvalidJson(e.to_string()))
+  }
+  Ok(value)
+}
+
+///|
 pub fn BillInput::to_json(self : BillInput) -> Json {
   let (aggregation, policy) = match self.aggregation {
     Sum => ("sum", Json::null())
@@ -369,18 +395,10 @@ pub fn Snapshot::from_json(value : Json) -> Result[Snapshot, ReplayError] {
 
 ///|
 pub fn Snapshot::from_string(text : String) -> Result[Snapshot, ReplayError] {
-  if text.length() > 16777216 {
-    return Err(InvalidSnapshot("text: limit 16Mi code units"))
+  match parse_document(text) {
+    Ok(value) => Snapshot::from_json(value)
+    Err(error) => Err(error)
   }
-  let value = @json.parse(
-    text,
-    reject_duplicate_keys=true,
-    preserve_number_repr=true,
-    max_nesting_depth=64,
-  ) catch {
-    e => return Err(InvalidJson(e.to_string()))
-  }
-  Snapshot::from_json(value)
 }
 
 ///|

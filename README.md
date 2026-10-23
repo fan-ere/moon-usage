@@ -93,6 +93,7 @@ let result = @usage.bill(events, "customer-a", "requests", 10, 20, Sum, plan)
 | `bill(events, account, meter, start, end, mode, plan)` | 组合前两层，返回 `Result[Bill, UsageError]` |
 | `Bill::to_json()` | 导出带模式、逐笔累计差分、事件来源和费用明细的 JSON 账单 |
 | `capture(BillInput)` | 冻结完整原始输入、价目表、版本标签和计算结果，返回可复算快照 |
+| `BillInput::from_string(text)` | 严格读取原始输入 JSON，拒绝重复键、数字精度丢失与过深嵌套；随后调用 `capture` 执行计量计价校验 |
 | `Snapshot::from_string(text)` / `Snapshot::from_json(value)` | 校验快照版本与字段，重新计算并核对完整账单 |
 | `Snapshot::replay()` | 使用已保存输入重新计算；返回 `Result[Bill, ReplayError]` |
 
