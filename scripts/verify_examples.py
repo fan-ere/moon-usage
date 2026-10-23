@@ -31,7 +31,9 @@ def main():
             raise RuntimeError(f"{target}: demo output differs from documented result")
         if json.loads(run("export", target)) != expected_json:
             raise RuntimeError(f"{target}: exported bill differs from documented result")
-        print(f"{target}: demo text and complete JSON match", flush=True)
+        if run("batch", target) != "a: 35\nb: 55\nCNY total: 90\n":
+            raise RuntimeError(f"{target}: batch accounts or totals differ")
+        print(f"{target}: demo, complete JSON and batch totals match", flush=True)
 
 
 if __name__ == "__main__":

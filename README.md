@@ -97,8 +97,11 @@ let result = @usage.bill(events, "customer-a", "requests", 10, 20, Sum, plan)
 | `Snapshot::from_string(text)` / `Snapshot::from_json(value)` | 校验快照版本与字段，重新计算并核对完整账单 |
 | `Snapshot::replay()` | 使用已保存输入重新计算；返回 `Result[Bill, ReplayError]` |
 | `compare_snapshots(before, after)` | 复算两份快照，校验上下文、币种和版本标签，返回精确有符号差额与事件增删改 |
+| `capture_batch(events, input_revision, requests)` | 一批事件为多个账户/计量项出账，任何请求失败则整体返回错误；按币种分别汇总，不自动换汇 |
 
 完整公开接口见 [pkg.generated.mbti](pkg.generated.mbti)，算法与不变量见 [docs/DESIGN.md](docs/DESIGN.md)。
+
+多账户示例：`moon run examples/batch`，输出账户 a 为 35 分、b 为 55 分，CNY 合计 90 分。`BillRequest` 指定唯一请求 ID、账户、计量项、周期、模式和价格版本；重复请求 ID 或相同账户/计量项/周期拒绝，避免重复出账。批量最多 256 个请求、所有快照合计最多 16 Mi 字符串代码单元；同币种总额超出 Int64 会拒绝。每份快照保留全批输入，批量接口目前逐请求计算，不承诺共享索引提速。不同但重叠的周期允许，调用方须自行决定是否适合合计；返回结果是纯计算成功，不是数据库事务或扣款。
 
 ## 计量语义
 

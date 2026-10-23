@@ -12,6 +12,8 @@ pub fn bill(Array[Event], String, String, Int32, Int32, Aggregation, Plan) -> Re
 
 pub fn capture(BillInput) -> Result[Snapshot, ReplayError]
 
+pub fn capture_batch(Array[Event], String, Array[BillRequest]) -> Result[BatchBill, BatchError]
+
 pub fn compare_snapshots(Snapshot, Snapshot) -> Result[BillChange, ComparisonError]
 
 pub fn rate(Plan, Int32) -> Result[Quote, UsageError]
@@ -30,6 +32,24 @@ pub(all) enum Aggregation {
 pub fn Aggregation::equal(Self, Self) -> Bool
 pub fn Aggregation::not_equal(Self, Self) -> Bool
 pub fn Aggregation::to_repr(Self) -> @debug.Repr
+
+pub(all) struct BatchBill {
+  bills : Array[NamedSnapshot]
+  totals : Array[CurrencyTotal]
+}
+
+pub(all) enum BatchError {
+  InvalidRequestCount
+  EmptyRequestId
+  DuplicateRequest(String)
+  DuplicateContext(String)
+  CalculationFailed(String, ReplayError)
+  TotalOverflow(String)
+  OutputLimit
+} derive(Eq, @debug.Debug)
+pub fn BatchError::equal(Self, Self) -> Bool
+pub fn BatchError::not_equal(Self, Self) -> Bool
+pub fn BatchError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Bill {
   account : String
@@ -73,6 +93,17 @@ pub fn BillInput::from_json(Json) -> Result[Self, ReplayError]
 pub fn BillInput::from_string(String) -> Result[Self, ReplayError]
 pub fn BillInput::to_json(Self) -> Json
 
+pub(all) struct BillRequest {
+  id : String
+  account : String
+  meter : String
+  start : Int32
+  end : Int32
+  aggregation : Aggregation
+  plan_revision : String
+  plan : Plan
+}
+
 pub(all) struct ChargeLine {
   tier : Int32
   quantity : Int32
@@ -106,6 +137,14 @@ pub fn CounterDelta::equal(Self, Self) -> Bool
 pub fn CounterDelta::not_equal(Self, Self) -> Bool
 pub fn CounterDelta::to_repr(Self) -> @debug.Repr
 
+pub(all) struct CurrencyTotal {
+  currency : String
+  total_minor : Int64
+} derive(Eq, @debug.Debug)
+pub fn CurrencyTotal::equal(Self, Self) -> Bool
+pub fn CurrencyTotal::not_equal(Self, Self) -> Bool
+pub fn CurrencyTotal::to_repr(Self) -> @debug.Repr
+
 pub(all) struct Event {
   id : String
   account : String
@@ -116,6 +155,11 @@ pub(all) struct Event {
 pub fn Event::equal(Self, Self) -> Bool
 pub fn Event::not_equal(Self, Self) -> Bool
 pub fn Event::to_repr(Self) -> @debug.Repr
+
+pub(all) struct NamedSnapshot {
+  id : String
+  snapshot : Snapshot
+}
 
 pub(all) struct Plan {
   currency : String
