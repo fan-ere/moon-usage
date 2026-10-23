@@ -16,9 +16,12 @@ FILE_LIMIT = 16 * 1024 * 1024
 
 
 def read_text(path):
-    if path.stat().st_size > FILE_LIMIT:
+    # Bound the read itself: a file may grow after a separate stat() call.
+    with path.open("rb") as stream:
+        content = stream.read(FILE_LIMIT + 1)
+    if len(content) > FILE_LIMIT:
         raise ValueError("Input file exceeds 16 MiB")
-    return path.read_text(encoding="utf-8")
+    return content.decode("utf-8")
 
 
 def invoke(command, payload):

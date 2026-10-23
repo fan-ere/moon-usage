@@ -7,6 +7,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+
+import ledger
 
 
 HERE = Path(__file__).resolve().parent
@@ -134,6 +137,22 @@ class LedgerIntegration(unittest.TestCase):
         path = self.root / "events.csv"
         path.write_text(text, encoding="utf-8")
         return path
+
+    def test_input_limit_bounds_actual_bytes_and_rejects_invalid_utf8(self):
+        source = self.root / "size.json"
+        with patch.object(ledger, "FILE_LIMIT", 8):
+            source.write_bytes(b"12345678")
+            self.assertEqual(ledger.read_text(source), "12345678")
+            source.write_bytes(b"123456789")
+            with self.assertRaisesRegex(ValueError, "exceeds"):
+                ledger.read_text(source)
+            source.write_bytes("用量输入".encode("utf-8"))
+            with self.assertRaisesRegex(ValueError, "exceeds"):
+                ledger.read_text(source)
+        source.write_bytes(b"\xff")
+        target = self.root / "invalid-encoding.bill.json"
+        self.assertIn("decode", self.cli("record", source, target, success=False))
+        self.assertFalse(target.exists())
 
     def test_csv_to_readable_bill_and_replay(self):
         archive = self.root / "csv-bill.json"
