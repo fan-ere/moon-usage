@@ -21,14 +21,14 @@ class LedgerIntegration(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def cli(self, *arguments, success=True):
+    def cli(self, *arguments, success=True, as_text=False):
         run = subprocess.run(
             [sys.executable, str(HERE / "ledger.py"), *map(str, arguments)],
             capture_output=True, text=True, encoding="utf-8",
         )
         if success:
             self.assertEqual(run.returncode, 0, run.stderr)
-            return json.loads(run.stdout)
+            return run.stdout if as_text else json.loads(run.stdout)
         self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
         return run.stderr
 
@@ -129,6 +129,80 @@ class LedgerIntegration(unittest.TestCase):
         self.assertEqual(difference["removed_event_ids"], ["late"])
         self.assertEqual(difference["changed_event_ids"], ["first"])
         self.assertEqual(difference["total_minor_delta"], "-16")
+
+    def csv_input(self, text):
+        path = self.root / "events.csv"
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_csv_to_readable_bill_and_replay(self):
+        archive = self.root / "csv-bill.json"
+        result = self.cli("import-csv", FIXTURES / "events.csv", FIXTURES / "config.json", archive)
+        self.assertEqual(result["total_minor"], "35")
+        report = self.cli("report", archive, as_text=True)
+        for expected in ("Quantity: 10", "duplicate deliveries: 1", "exact_minor=30/1", "Total minor: 35 CNY"):
+            self.assertIn(expected, report)
+        saved = json.loads(archive.read_text(encoding="utf-8"))
+        self.assertEqual(len(saved["input"]["events"]), 2)
+        self.assertEqual(self.cli("verify", archive)["total_minor"], "35")
+        saved["bill"]["quote"]["total_minor"] = "99"
+        archive.write_text(json.dumps(saved), encoding="utf-8")
+        self.assertIn("BillMismatch", self.cli("report", archive, success=False))
+
+    def test_csv_conflicting_retry_is_rejected_before_writing(self):
+        source = self.csv_input("id,account,meter,time,value\nx,demo-customer,requests,11,10\nx,demo-customer,requests,11,12\n")
+        archive = self.root / "conflict.json"
+        self.assertIn("DuplicateConflict", self.cli("import-csv", source, FIXTURES / "config.json", archive, success=False))
+        self.assertFalse(archive.exists())
+
+    def test_csv_format_and_scope_errors_do_not_create_archive(self):
+        for text in (
+            "id,account,meter,time,value\n",
+            "id,account,meter,time,value,value\n",
+            "id,account,meter,time,value\nx,demo-customer,requests,11,1e1\n",
+            "id,account,meter,time,value\nx,demo-customer,requests,11,1.5\n",
+            "id,account,meter,time,value\nx,demo-customer,requests,11,-1\n",
+            "id,account,meter,time,value\nx,demo-customer,requests,2147483648,1\n",
+            "id,account,meter,time,value\nx,demo-customer,requests,11,1,extra\n",
+            "id,account,meter,time,value\nx,other,requests,11,1\n",
+            'id,account,meter,time,value\n"unclosed,demo-customer,requests,11,1',
+        ):
+            with self.subTest(text=text):
+                archive = self.root / "bad.json"
+                self.cli("import-csv", self.csv_input(text), FIXTURES / "config.json", archive, success=False)
+                self.assertFalse(archive.exists())
+
+    def test_csv_unknown_configuration_and_invalid_numbers_are_rejected(self):
+        original = (FIXTURES / "config.json").read_text(encoding="utf-8")
+        for text, expected in (
+            (original.replace('"sum"', '"unknown"'), "aggregation"),
+            (original.replace('"start": 10', '"start": -0'), "plain integer"),
+            (original.replace('"start": 10', '"start": 1e1'), "plain integer"),
+            (original.replace('"start": 10', '"start": 10.0000000000000001'), "plain integer"),
+            (original.replace('"start": 10', '"start": 10, "start": 11'), "Duplicate"),
+            (original.replace('"start": 10', '"extra": 1, "start": 10'), "except events"),
+        ):
+            with self.subTest(expected=expected, text=text):
+                config = self.root / "config.json"
+                config.write_text(text, encoding="utf-8")
+                archive = self.root / "unknown.json"
+                self.assertIn(expected, self.cli("import-csv", FIXTURES / "events.csv", config, archive, success=False))
+                self.assertFalse(archive.exists())
+
+    def test_csv_counter_baseline_and_reset_policy(self):
+        config = json.loads((FIXTURES / "config.json").read_text(encoding="utf-8"))
+        config.update(aggregation="counter", reset_policy="restart_at_zero")
+        config_path = self.root / "counter-config.json"
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        source = self.csv_input("id,account,meter,time,value\nbase,demo-customer,requests,9,100\nread,demo-customer,requests,11,110\nreset,demo-customer,requests,12,4\n")
+        archive = self.root / "counter.json"
+        self.assertEqual(self.cli("import-csv", source, config_path, archive)["total_minor"], "43")
+        self.assertIn("Baseline: base; resets: 1", self.cli("report", archive, as_text=True))
+        config["reset_policy"] = "reject_decrease"
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        rejected = self.root / "decrease.json"
+        self.assertIn("CounterDecreased", self.cli("import-csv", source, config_path, rejected, success=False))
+        self.assertFalse(rejected.exists())
 
 
 if __name__ == "__main__":

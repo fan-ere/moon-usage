@@ -1,0 +1,18 @@
+{
+  "input_revision": "events-1",
+  "plan_revision": "price-1",
+  "account": "demo-customer",
+  "meter": "requests",
+  "start": 10,
+  "end": 20,
+  "aggregation": "sum",
+  "reset_policy": null,
+  "plan": {
+    "currency": "CNY",
+    "pricing": "graduated",
+    "rounding": "half_even",
+    "per_units": 1,
+    "base_minor": 5,
+    "tiers": [{ "up_to": 10, "rate": 3 }, { "up_to": null, "rate": 2 }]
+  }
+}

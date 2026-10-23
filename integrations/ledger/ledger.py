@@ -1,8 +1,11 @@
 """Local bill archive client. MoonBit performs every billing/replay calculation."""
 
 import argparse
+import csv
+import io
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -41,6 +44,10 @@ def verify(path):
 
 def record(source, destination):
     snapshot = invoke("capture", read_text(source))
+    return save_snapshot(snapshot, destination)
+
+
+def save_snapshot(snapshot, destination):
     encoded = json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n"
     if len(encoded.encode("utf-8")) > FILE_LIMIT:
         raise ValueError("Archive exceeds the client's 16 MiB limit")
@@ -53,6 +60,86 @@ def record(source, destination):
         destination.unlink()
         raise
     return snapshot
+
+
+def import_csv(source, config, destination):
+    """Adapt one account/meter CSV; MoonBit validates and calculates the input."""
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"Duplicate configuration key: {key}")
+            result[key] = value
+        return result
+
+    def invalid_number(token):
+        raise ValueError(f"Expected a plain integer in configuration: {token}")
+
+    def integer(token):
+        if not re.fullmatch(r"0|[1-9][0-9]{0,9}", token) or int(token) > 2147483647:
+            return invalid_number(token)
+        return int(token)
+
+    data = json.loads(read_text(config), object_pairs_hook=unique_object,
+                      parse_int=integer, parse_float=invalid_number, parse_constant=invalid_number)
+    keys = {"input_revision", "plan_revision", "account", "meter", "start", "end",
+            "aggregation", "reset_policy", "plan"}
+    if not isinstance(data, dict) or set(data) != keys:
+        raise ValueError("Configuration must contain the BillInput fields except events")
+    reader = csv.reader(io.StringIO(read_text(source).removeprefix("\ufeff")), strict=True)
+    try:
+        header = next(reader, None)
+        if header != ["id", "account", "meter", "time", "value"]:
+            raise ValueError("CSV header must be id,account,meter,time,value")
+        events = []
+        for row in reader:
+            line = reader.line_num
+            if len(row) != 5 or any(not field.strip() for field in row):
+                raise ValueError(f"CSV line {line}: expected five nonempty fields")
+            if len(events) >= 100000:
+                raise ValueError("CSV event limit is 100000")
+            if row[1] != data["account"] or row[2] != data["meter"]:
+                raise ValueError(f"CSV line {line}: account/meter differs from configuration")
+            numbers = []
+            for label, token in zip(("time", "value"), row[3:]):
+                if not re.fullmatch(r"0|[1-9][0-9]{0,9}", token) or int(token) > 2147483647:
+                    raise ValueError(f"CSV line {line}: {label} must be a nonnegative Int32")
+                numbers.append(int(token))
+            events.append(dict(zip(header, row[:3] + numbers)))
+        if not events:
+            raise ValueError("CSV must contain at least one event")
+    except csv.Error as error:
+        raise ValueError(f"CSV line {reader.line_num}: {error}") from error
+    data["events"] = events
+    snapshot = invoke("capture", json.dumps(data, ensure_ascii=False))
+    return save_snapshot(snapshot, destination)
+
+
+def report(path):
+    snapshot = verify(path)
+    bill = snapshot["bill"]
+    usage, quote = bill["usage"], bill["quote"]
+    lines = [
+        "moon-usage verified bill",
+        f"Account: {bill['account']}", f"Meter: {bill['meter']}",
+        f"Period: [{bill['start']}, {bill['end']})",
+        f"Input revision: {snapshot['input']['input_revision']}",
+        f"Plan revision: {snapshot['input']['plan_revision']}",
+        f"Aggregation: {snapshot['input']['aggregation']}",
+        f"Quantity: {usage['quantity']}",
+        f"Accepted events: {usage['accepted_events']}; duplicate deliveries: {usage['duplicate_events']}",
+        f"Baseline: {usage['baseline_id']}; resets: {usage['reset_events']}",
+        f"Pricing: {quote['pricing']}; rounding: {quote['rounding']}",
+    ]
+    for item in quote["lines"]:
+        lines.append(f"Tier {item['tier']}: quantity={item['quantity']} rate={item['rate']} "
+                     f"exact_minor={item['numerator']}/{quote['denominator']}")
+    lines.extend([
+        f"Usage minor: {quote['usage_minor']}", f"Base minor: {quote['base_minor']}",
+        f"Total minor: {quote['total_minor']} {quote['currency']}",
+        "Recomputed from archived input; not a payment request or tax invoice.",
+    ])
+    return "\n".join(lines)
 
 
 def compare(before_path, after_path):
@@ -96,19 +183,29 @@ def main():
     difference = commands.add_parser("compare", help="Verify two archives and show signed changes")
     difference.add_argument("before", type=Path)
     difference.add_argument("after", type=Path)
+    ingest = commands.add_parser("import-csv", help="Calculate CSV events with a JSON billing configuration")
+    ingest.add_argument("events", type=Path)
+    ingest.add_argument("config", type=Path)
+    ingest.add_argument("archive", type=Path)
+    display = commands.add_parser("report", help="Verify an archive and print a readable bill")
+    display.add_argument("archive", type=Path)
     args = parser.parse_args()
     try:
-        if args.command == "record":
-            result = record(args.input, args.archive)
+        if args.command in ("record", "import-csv"):
+            result = (record(args.input, args.archive) if args.command == "record"
+                      else import_csv(args.events, args.config, args.archive))
             output = {"archive": str(args.archive), "total_minor": result["bill"]["quote"]["total_minor"]}
         elif args.command == "verify":
             result = verify(args.archive)
             output = {"verified": True, "total_minor": result["bill"]["quote"]["total_minor"]}
+        elif args.command == "report":
+            print(report(args.archive))
+            return 0
         else:
             output = compare(args.before, args.after)
         print(json.dumps(output, ensure_ascii=False, indent=2))
         return 0
-    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+    except (OSError, ValueError, RecursionError, subprocess.CalledProcessError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
 
