@@ -116,7 +116,7 @@ class LedgerIntegration(unittest.TestCase):
             source = self.altered_input(f"{key}-input.json", change)
             after = self.root / f"{key}-bill.json"
             self.cli("record", source, after)
-            self.assertIn("revision", self.cli("compare", before, after, success=False))
+            self.assertIn("revision", self.cli("compare", before, after, success=False).lower())
 
     def test_removed_and_changed_events_are_reported(self):
         before = self.archive("late.json")

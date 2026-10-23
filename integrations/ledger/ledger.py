@@ -24,7 +24,7 @@ def read_text(path):
     return content.decode("utf-8")
 
 
-def invoke(command, payload):
+def invoke(command, payload, result_key="snapshot"):
     process = subprocess.run(
         ["moon", "run", "integrations/ledger/bridge", "--target", "js"],
         cwd=ROOT,
@@ -37,7 +37,7 @@ def invoke(command, payload):
     response = json.loads(process.stdout)
     if response.get("ok") is not True:
         raise ValueError(response.get("error", "MoonBit bridge rejected the request"))
-    return response["snapshot"]
+    return response[result_key]
 
 
 def verify(path):
@@ -146,33 +146,8 @@ def report(path):
 
 
 def compare(before_path, after_path):
-    before, after = verify(before_path), verify(after_path)
-    old, new = before["input"], after["input"]
-    for key in ("account", "meter", "start", "end", "aggregation", "reset_policy"):
-        if old[key] != new[key]:
-            raise ValueError(f"Cannot compare different billing contexts: {key}")
-    if old["plan"]["currency"] != new["plan"]["currency"]:
-        raise ValueError("Cannot subtract amounts in different currencies")
-    if old["events"] != new["events"] and old["input_revision"] == new["input_revision"]:
-        raise ValueError("Changed events require a new input_revision")
-    if old["plan"] != new["plan"] and old["plan_revision"] == new["plan_revision"]:
-        raise ValueError("Changed prices require a new plan_revision")
-    old_events = {event["id"]: event for event in old["events"]}
-    new_events = {event["id"]: event for event in new["events"]}
-    old_ids, new_ids = set(old_events), set(new_events)
-    return {
-        "currency": new["plan"]["currency"],
-        "before_input_revision": old["input_revision"],
-        "after_input_revision": new["input_revision"],
-        "before_plan_revision": old["plan_revision"],
-        "after_plan_revision": new["plan_revision"],
-        "quantity_delta": after["bill"]["usage"]["quantity"] - before["bill"]["usage"]["quantity"],
-        "total_minor_delta": str(int(after["bill"]["quote"]["total_minor"]) - int(before["bill"]["quote"]["total_minor"])),
-        "added_event_ids": sorted(new_ids - old_ids),
-        "removed_event_ids": sorted(old_ids - new_ids),
-        "changed_event_ids": sorted(key for key in old_ids & new_ids if old_events[key] != new_events[key]),
-        "plan_changed": old["plan"] != new["plan"],
-    }
+    payload = json.dumps({"before": read_text(before_path), "after": read_text(after_path)})
+    return invoke("compare", payload, result_key="change")
 
 
 def main():

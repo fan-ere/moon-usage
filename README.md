@@ -96,6 +96,7 @@ let result = @usage.bill(events, "customer-a", "requests", 10, 20, Sum, plan)
 | `BillInput::from_string(text)` | 严格读取原始输入 JSON，拒绝重复键、数字精度丢失与过深嵌套；随后调用 `capture` 执行计量计价校验 |
 | `Snapshot::from_string(text)` / `Snapshot::from_json(value)` | 校验快照版本与字段，重新计算并核对完整账单 |
 | `Snapshot::replay()` | 使用已保存输入重新计算；返回 `Result[Bill, ReplayError]` |
+| `compare_snapshots(before, after)` | 复算两份快照，校验上下文、币种和版本标签，返回精确有符号差额与事件增删改 |
 
 完整公开接口见 [pkg.generated.mbti](pkg.generated.mbti)，算法与不变量见 [docs/DESIGN.md](docs/DESIGN.md)。
 

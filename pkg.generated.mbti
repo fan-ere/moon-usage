@@ -12,6 +12,8 @@ pub fn bill(Array[Event], String, String, Int32, Int32, Aggregation, Plan) -> Re
 
 pub fn capture(BillInput) -> Result[Snapshot, ReplayError]
 
+pub fn compare_snapshots(Snapshot, Snapshot) -> Result[BillChange, ComparisonError]
+
 pub fn rate(Plan, Int32) -> Result[Quote, UsageError]
 
 pub fn validate_plan(Plan) -> Result[Unit, UsageError]
@@ -40,6 +42,22 @@ pub(all) struct Bill {
 pub fn Bill::to_json(Self) -> Json
 pub fn Bill::to_repr(Self) -> @debug.Repr
 
+pub(all) struct BillChange {
+  currency : String
+  before_input_revision : String
+  after_input_revision : String
+  before_plan_revision : String
+  after_plan_revision : String
+  quantity_delta : Int32
+  total_minor_delta : Int64
+  added_event_ids : Array[String]
+  removed_event_ids : Array[String]
+  changed_event_ids : Array[String]
+  plan_changed : Bool
+} derive(@debug.Debug)
+pub fn BillChange::to_json(Self) -> Json
+pub fn BillChange::to_repr(Self) -> @debug.Repr
+
 pub(all) struct BillInput {
   input_revision : String
   plan_revision : String
@@ -64,6 +82,17 @@ pub(all) struct ChargeLine {
 pub fn ChargeLine::equal(Self, Self) -> Bool
 pub fn ChargeLine::not_equal(Self, Self) -> Bool
 pub fn ChargeLine::to_repr(Self) -> @debug.Repr
+
+pub(all) enum ComparisonError {
+  InvalidBefore(ReplayError)
+  InvalidAfter(ReplayError)
+  DifferentContext(String)
+  InputRevisionRequired
+  PlanRevisionRequired
+} derive(Eq, @debug.Debug)
+pub fn ComparisonError::equal(Self, Self) -> Bool
+pub fn ComparisonError::not_equal(Self, Self) -> Bool
+pub fn ComparisonError::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CounterDelta {
   event_id : String
