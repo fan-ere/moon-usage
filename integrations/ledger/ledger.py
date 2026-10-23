@@ -13,6 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 FILE_LIMIT = 16 * 1024 * 1024
+BRIDGE_TIMEOUT = 60
 
 
 def read_text(path):
@@ -25,18 +26,33 @@ def read_text(path):
 
 
 def invoke(command, payload, result_key="snapshot"):
-    process = subprocess.run(
-        ["moon", "run", "integrations/ledger/bridge", "--target", "js"],
-        cwd=ROOT,
-        input=json.dumps({"command": command, "payload": payload}, ensure_ascii=False),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=True,
-    )
-    response = json.loads(process.stdout)
+    try:
+        process = subprocess.run(
+            ["moon", "run", "integrations/ledger/bridge", "--target", "js"],
+            cwd=ROOT,
+            input=json.dumps({"command": command, "payload": payload}, ensure_ascii=False),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=BRIDGE_TIMEOUT,
+        )
+    except FileNotFoundError as error:
+        raise ValueError("MoonBit executable not found; add moon to PATH") from error
+    except subprocess.TimeoutExpired as error:
+        raise ValueError(f"MoonBit bridge timed out after {BRIDGE_TIMEOUT} seconds") from error
+    if process.returncode:
+        detail = process.stderr.strip()[:2000] or "No diagnostic output"
+        raise ValueError(f"MoonBit bridge failed (exit {process.returncode}): {detail}")
+    try:
+        response = json.loads(process.stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError("MoonBit bridge returned invalid JSON") from error
+    if not isinstance(response, dict):
+        raise ValueError("MoonBit bridge returned an invalid response object")
     if response.get("ok") is not True:
         raise ValueError(response.get("error", "MoonBit bridge rejected the request"))
+    if result_key not in response:
+        raise ValueError(f"MoonBit bridge omitted {result_key}")
     return response[result_key]
 
 

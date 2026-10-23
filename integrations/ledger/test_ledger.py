@@ -154,6 +154,26 @@ class LedgerIntegration(unittest.TestCase):
         self.assertIn("decode", self.cli("record", source, target, success=False))
         self.assertFalse(target.exists())
 
+    def test_bridge_failures_preserve_diagnostics_and_never_create_archives(self):
+        destination = self.root / "failed.bill.json"
+        failures = [
+            (FileNotFoundError(), "add moon to PATH"),
+            (subprocess.TimeoutExpired("moon", 60), "timed out"),
+            (subprocess.CompletedProcess([], 1, "", "Compiler error: missing package"), "missing package"),
+            (subprocess.CompletedProcess([], 0, "not json", ""), "invalid JSON"),
+            (subprocess.CompletedProcess([], 0, "[]", ""), "response object"),
+            (subprocess.CompletedProcess([], 0, '{"ok":true}', ""), "omitted snapshot"),
+        ]
+        for failure, message in failures:
+            with self.subTest(message=message):
+                kwargs = ({"side_effect": failure} if isinstance(failure, Exception)
+                          else {"return_value": failure})
+                with patch.object(ledger.subprocess, "run", **kwargs) as call:
+                    with self.assertRaisesRegex(ValueError, message):
+                        ledger.record(FIXTURES / "initial.json", destination)
+                    self.assertEqual(call.call_args.kwargs["timeout"], ledger.BRIDGE_TIMEOUT)
+                self.assertFalse(destination.exists())
+
     def test_csv_to_readable_bill_and_replay(self):
         archive = self.root / "csv-bill.json"
         result = self.cli("import-csv", FIXTURES / "events.csv", FIXTURES / "config.json", archive)
