@@ -39,6 +39,6 @@ python integrations/ledger/ledger.py verify _build/my-bill.json
 
 ## 责任与范围
 
-MoonBit 实现全部事件校验、去重、四种计量、两种阶梯价、整数精度、快照和全字段复算。Python 只处理 CSV、文件、报告排版和两个已验证账单之间的差额，不实现另一套计价算法。核心 API 可绕过客户端直接调用；`python integrations/ledger/test_ledger.py` 验证真实进程边界，四目标核心测试覆盖计量和定价。
+MoonBit 实现全部事件校验、去重、四种计量、两种阶梯价、整数精度、快照、全字段复算、版本关系和有符号差额。Python 只处理 CSV、文件、进程通信和报告排版。核心 API 可绕过客户端直接调用；`python integrations/ledger/test_ledger.py` 验证真实进程边界，四目标核心测试覆盖计量和定价。多账户出账可使用 `capture_batch`，运行 `moon run examples/batch` 得到两份独立账单及按币种汇总结果；任一请求失败则整体返回错误。
 
 本期未实现在线事件接收、数据库、并发结算、支付退款、税务发票、签名或生产运维。CSV 最多 100,000 行数据，文件最多 16 MiB；完整 JSON 接口和快照另有文档化限制。空 CSV 被拒绝；允许空用量出账的调用方可以显式使用完整 JSON/API（基础费仍可能收取）。复算只能证明输入与结果一致，不能证明用量真实。
